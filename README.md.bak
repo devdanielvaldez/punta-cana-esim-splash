@@ -1,0 +1,18 @@
+# TripTap - Página de Login
+
+Esta es una página de login moderna y elegante para TripTap, una aplicación de viajes.
+
+## Características
+
+- **Diseño oscuro moderno**: Interfaz elegante con estética oscura
+- **Responsive**: Se adapta perfectamente a todas las pantallas (móvil, tablet, desktop)
+- **Interactiva**: Efectos visuales y transiciones suaves
+- **Seguridad simulada**: Cualquier combinación de credenciales mostrará un error
+
+## Tecnologías utilizadas
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+
+## Estructura del proyecto
