@@ -1,38 +1,36 @@
-# TripTap - Página de Login
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-Esta es una página de login moderna y elegante para TripTap, una aplicación de viajes.
+## Getting Started
 
-## Características
+First, run the development server:
 
-- **Diseño oscuro moderno**: Interfaz elegante con estética oscura
-- **Responsive**: Se adapta perfectamente a todas las pantallas (móvil, tablet, desktop)
-- **Interactiva**: Efectos visuales y transiciones suaves
-- **Seguridad simulada**: Cualquier combinación de credenciales mostrará un error
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-## Tecnologías utilizadas
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-- Next.js
-- TypeScript
-- Tailwind CSS
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-## Estructura del proyecto
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Páginas Disponibles
+## Learn More
 
-### Página de Login
-- Ruta: `/login`
-- Funcionalidad: Permite a los usuarios iniciar sesión con email y contraseña
-- Muestra un mensaje de error independientemente de las credenciales ingresadas
+To learn more about Next.js, take a look at the following resources:
 
-### Página de Registro
-- Ruta: `/register`
-- Funcionalidad: Permite a nuevos usuarios registrarse como Empresa o Agencia
-- Campos: Tipo de registro, Nombre de Empresa/Agencia, Email, Teléfono, Contraseña
-- Validación: Confirma que las contraseñas coincidan y tengan al menos 8 caracteres
-- Error simulado: Muestra un error de conexión al API al intentar registrarse
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-### Página de Recuperación de Contraseña
-- Ruta: `/recuperar-password`
-- Funcionalidad: Permite a los usuarios solicitar un enlace para restablecer su contraseña
-- Validación: Comprueba que se ingrese un formato de email válido
-- Error simulado: Muestra un error de conexión al servidor al intentar enviar la solicitud
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
