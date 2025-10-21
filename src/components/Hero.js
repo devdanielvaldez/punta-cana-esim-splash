@@ -24,7 +24,7 @@ const HeroWithSearch = () => {
     const fetchPlans = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://dev.triptapmedia.com/api/esim/');
+        const response = await fetch('https://dev.triptapmedia.com/api/esim/?limit=300');
         const data = await response.json();
         
         if (data.data) {
@@ -194,6 +194,20 @@ const HeroWithSearch = () => {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 overflow-hidden pt-8">
+      {/* Logo en esquina superior izquierda */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.5 }}
+        className="absolute top-8 left-8 z-30"
+      >
+        <img
+          src="https://storage.googleapis.com/triptap/logo%20eSIM%20PC.png"
+          alt="eSIM Logo"
+          className="h-12 w-auto hover:scale-105 transition-transform duration-300"
+        />
+      </motion.div>
+
       {/* Background animations */}
       <div className="absolute inset-0">
         <motion.div
@@ -612,7 +626,6 @@ const HeroWithSearch = () => {
   );
 };
 
-// Checkout Dialog Component
 const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutData }) => {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [formData, setFormData] = useState({
@@ -635,16 +648,20 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
   // Set default package if operators are available
   useEffect(() => {
     if (selectedPlan.operators && selectedPlan.operators.length > 0) {
-      const firstOperator = selectedPlan.operators[0];
-      if (firstOperator.packages && firstOperator.packages.length > 0) {
-        const firstPackage = firstOperator.packages[0];
+      // Buscar el primer operador que tenga paquetes
+      const firstOperatorWithPackages = selectedPlan.operators.find(operator => 
+        operator.packages && operator.packages.length > 0
+      );
+      
+      if (firstOperatorWithPackages && firstOperatorWithPackages.packages.length > 0) {
+        const firstPackage = firstOperatorWithPackages.packages[0];
         setSelectedPackage({
-          operator: firstOperator,
+          operator: firstOperatorWithPackages,
           package: firstPackage
         });
         setFormData(prev => ({
           ...prev,
-          package_id: firstPackage.id || ''
+          package_id: firstPackage.id || firstPackage.package_id || ''
         }));
       }
     } else if (selectedPlan.package) {
@@ -655,7 +672,7 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
       });
       setFormData(prev => ({
         ...prev,
-        package_id: selectedPlan.package.id || ''
+        package_id: selectedPlan.package.id || selectedPlan.package.package_id || ''
       }));
     }
   }, [selectedPlan]);
@@ -688,6 +705,81 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
     if (days === 365) return '1 Year';
     return `${days} Days`;
   };
+
+  // Función para obtener TODOS los paquetes de TODOS los operadores SIN DUPLICADOS
+  const getAllPackages = () => {
+    if (!selectedPlan.operators) return [];
+    
+    const allPackages = [];
+    const seenPackages = new Set(); // Para evitar duplicados
+    
+    selectedPlan.operators.forEach(operator => {
+      if (operator.packages && operator.packages.length > 0) {
+        operator.packages.forEach(pkg => {
+          // Crear un identificador único para el paquete
+          const packageKey = `${operator.id}-${pkg.id || pkg.package_id}-${pkg.day}-${pkg.amount}-${pkg.price}`;
+          
+          // Solo agregar si no hemos visto este paquete antes
+          if (!seenPackages.has(packageKey)) {
+            seenPackages.add(packageKey);
+            allPackages.push({
+              operator,
+              package: pkg,
+              uniqueKey: packageKey // Guardar la clave única para usar como key en el render
+            });
+          }
+        });
+      }
+    });
+    
+    // Ordenar paquetes por precio (opcional)
+    return allPackages.sort((a, b) => a.package.price - b.package.price);
+  };
+
+// Función corregida para obtener paquetes sin duplicados
+// Función corregida para obtener paquetes sin duplicados y solo tipo 'sim'
+const getAllPackagesStrict = () => {
+  if (!selectedPlan.operators) return [];
+  
+  const allPackages = [];
+  const seenPackages = new Set();
+  
+  selectedPlan.operators.forEach(operator => {
+    if (operator.packages && operator.packages.length > 0) {
+      operator.packages.forEach(pkg => {
+        // Filtrar solo paquetes con type === 'sim'
+        if (pkg.type !== 'sim') return;
+        
+        // Identificador único
+        const packageId = pkg.id || pkg.package_id;
+        let uniqueKey;
+        
+        if (packageId && !seenPackages.has(packageId)) {
+          seenPackages.add(packageId);
+          uniqueKey = packageId;
+        } else if (!packageId) {
+          // Si no hay ID, usar una combinación de propiedades
+          const fallbackKey = `${operator.title}-${pkg.day}-${pkg.amount}-${pkg.price}`;
+          if (!seenPackages.has(fallbackKey)) {
+            seenPackages.add(fallbackKey);
+            uniqueKey = fallbackKey;
+          }
+        }
+        
+        // Solo agregar si encontramos una clave única
+        if (uniqueKey) {
+          allPackages.push({
+            operator,
+            package: pkg,
+            uniqueKey: uniqueKey
+          });
+        }
+      });
+    }
+  });
+  
+  return allPackages.sort((a, b) => a.package.price - b.package.price);
+};
 
   if (checkoutData) {
     return (
@@ -766,6 +858,8 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
     );
   }
 
+  const packages = getAllPackagesStrict(); // Usar la versión estricta
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -792,7 +886,7 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Plan Selection */}
+          {/* Plan Selection - CORREGIDO SIN DUPLICADOS */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
               <h3 className="text-lg font-semibold text-white mb-4">Selected Plan</h3>
@@ -813,39 +907,67 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
                 </div>
               </div>
 
-              {/* Package Selection */}
+              {/* Package Selection - SIN DUPLICADOS */}
               {selectedPlan.operators && (
                 <div className="space-y-4">
-                  <h4 className="text-white font-semibold">Available Packages</h4>
-                  {selectedPlan.operators.map((operator, index) => (
-                    <div key={index} className="space-y-2">
-                      <p className="text-white/70 text-sm font-medium">{operator.title}</p>
-                      {operator.packages?.slice(0, 3).map((pkg, pkgIndex) => (
-                        <motion.div
-                          key={pkgIndex}
-                          whileHover={{ scale: 1.02 }}
-                          className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                            selectedPackage?.package === pkg 
-                              ? 'border-cyan-400 bg-cyan-400/10' 
-                              : 'border-white/10 hover:border-white/20'
-                          }`}
-                          onClick={() => setSelectedPackage({ operator, package: pkg })}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="text-white font-semibold">
-                                {formatData(pkg.amount)}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                {formatDuration(pkg.day)}
-                              </p>
-                            </div>
-                            <p className="text-cyan-400 font-bold">${pkg.price}</p>
-                          </div>
-                        </motion.div>
-                      ))}
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-white font-semibold">Available Packages</h4>
+                    <span className="text-white/60 text-sm">
+                      {packages.length} packages
+                    </span>
+                  </div>
+                  
+                  {/* Mostrar todos los paquetes sin duplicados */}
+{packages.map((item) => (
+  <motion.div
+    key={item.uniqueKey}
+    whileHover={{ scale: 1.02 }}
+    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+      selectedPackage?.uniqueKey === item.uniqueKey 
+        ? 'border-cyan-400 bg-cyan-400/10' 
+        : 'border-white/10 hover:border-white/20'
+    }`}
+    onClick={() => setSelectedPackage(item)}
+  >
+    <div className="flex justify-between items-start mb-2">
+      <div className="flex-1">
+        <p className="text-white font-semibold">
+          {formatData(item.package.amount)}
+        </p>
+        <p className="text-white/60 text-sm">
+          {formatDuration(item.package.day)}
+        </p>
+        <p className="text-white/50 text-xs mt-1">
+          {item.operator.title}
+        </p>
+      </div>
+      <p className="text-cyan-400 font-bold text-lg">${item.package.price}</p>
+    </div>
+    
+    {/* Información adicional del paquete */}
+    <div className="flex items-center space-x-4 text-xs text-white/60">
+      {item.package.day && (
+        <div className="flex items-center space-x-1">
+          <Calendar className="w-3 h-3" />
+          <span>{item.package.day} days</span>
+        </div>
+      )}
+      {item.package.amount && (
+        <div className="flex items-center space-x-1">
+          <Signal className="w-3 h-3" />
+          <span>{formatData(item.package.amount)}</span>
+        </div>
+      )}
+    </div>
+  </motion.div>
+))}
+
+                  {/* Mensaje si no hay paquetes */}
+                  {packages.length === 0 && (
+                    <div className="text-center p-4 text-white/60">
+                      No packages available for this country
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
 
@@ -854,6 +976,10 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
                 <div className="mt-6 pt-6 border-t border-white/10">
                   <h4 className="text-white font-semibold mb-3">Order Summary</h4>
                   <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-white/60">Operator:</span>
+                      <span className="text-white">{selectedPackage.operator.title}</span>
+                    </div>
                     <div className="flex justify-between">
                       <span className="text-white/60">Data:</span>
                       <span className="text-white">{formatData(selectedPackage.package.amount)}</span>
@@ -872,7 +998,7 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
             </div>
           </div>
 
-          {/* Payment Form */}
+          {/* Payment Form (se mantiene igual) */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
