@@ -2,18 +2,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import { 
-  Search, Filter, Globe, Wifi, Calendar, DollarSign, 
+  Filter, Globe, Wifi, Calendar, DollarSign, 
   ChevronDown, Check, X, MapPin, CreditCard, User, 
   Mail, Phone, Map, Loader, ArrowLeft, Shield, 
-  Plane, Signal, Zap, Clock
+  Plane, Signal, Zap, Clock, ShoppingCart
 } from 'lucide-react';
 
 const HeroWithSearch = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [showSearchResults, setShowSearchResults] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
@@ -40,59 +37,18 @@ const HeroWithSearch = () => {
     fetchPlans();
   }, []);
 
-  // Search functionality
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    
-    if (query.length < 2) {
-      setShowSearchResults(false);
-      setSearchResults([]);
-      return;
-    }
-
-    const filtered = plans.filter(plan =>
-      plan.title.toLowerCase().includes(query.toLowerCase()) ||
-      plan.slug.toLowerCase().includes(query.toLowerCase()) ||
-      plan.operators?.some(op => 
-        op.title.toLowerCase().includes(query.toLowerCase())
-      )
-    );
-
-    // Sort: Dominican Republic first
-    const sorted = filtered.sort((a, b) => {
-      if (a.slug === 'dominican-republic') return -1;
-      if (b.slug === 'dominican-republic') return 1;
-      return a.title.localeCompare(b.title);
-    });
-
-    setSearchResults(sorted);
-    setShowSearchResults(true);
-  };
-
-  // Handle plan selection from search
-  const handlePlanSelect = (plan, operator = null, packageItem = null) => {
-    if (operator && packageItem) {
-      // Direct selection with specific package
+  // Función para abrir directamente Dominican Republic
+  const handleOpenDominicanRepublic = () => {
+    const dominicanRepublic = plans.find(plan => plan.slug === 'dominican-republic');
+    if (dominicanRepublic) {
       setSelectedPlan({
-        country: plan.title,
-        countrySlug: plan.slug,
-        operator: operator.title,
-        package: packageItem,
-        image: plan.image?.url
-      });
-      setShowCheckoutDialog(true);
-    } else {
-      // Just show country plans
-      setSelectedPlan({
-        country: plan.title,
-        countrySlug: plan.slug,
-        image: plan.image?.url,
-        operators: plan.operators
+        country: dominicanRepublic.title,
+        countrySlug: dominicanRepublic.slug,
+        image: dominicanRepublic.image?.url,
+        operators: dominicanRepublic.operators
       });
       setShowCheckoutDialog(true);
     }
-    setShowSearchResults(false);
-    setSearchQuery('');
   };
 
   // Handle checkout
@@ -144,13 +100,6 @@ const HeroWithSearch = () => {
     { icon: '🌐', title: 'Global Coverage', description: '150+ countries' },
   ];
 
-  // Airplanes animation
-  const airplanes = [
-    { delay: 0, duration: 25, startX: -100, startY: '15%', endX: '120%', size: 'w-12 h-12' },
-    { delay: 5, duration: 30, startX: -100, startY: '35%', endX: '120%', size: 'w-10 h-10' },
-    { delay: 12, duration: 28, startX: '120%', startY: '25%', endX: -100, size: 'w-14 h-14' },
-  ];
-
   // Geometric shapes
   const geometricShapes = [
     { 
@@ -181,16 +130,6 @@ const HeroWithSearch = () => {
     { delay: 1, duration: 5, startX: '70%', startY: '30%', endX: '40%', endY: '50%' },
     { delay: 2, duration: 6, startX: '30%', startY: '60%', endX: '80%', endY: '40%' },
   ];
-
-  // Airplane Icon Component
-  const AirplaneIcon = ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22 16V21L2 16V21L8 14L22 16Z" fill="currentColor" fillOpacity="0.6"/>
-      <path d="M22 16L2 11L8 14L22 16Z" fill="currentColor" fillOpacity="0.8"/>
-      <path d="M8 14L2 11V3L8 14Z" fill="currentColor" fillOpacity="0.4"/>
-      <path d="M22 16L8 14L14 3L22 16Z" fill="currentColor" fillOpacity="0.4"/>
-    </svg>
-  );
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-blue-900 overflow-hidden pt-8">
@@ -340,75 +279,36 @@ const HeroWithSearch = () => {
               </p>
             </motion.div>
 
-            {/* Search Bar */}
+            {/* Dominican Republic Button */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.8 }}
               className="relative"
             >
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Search for a country (e.g., Dominican Republic, Spain, USA...)"
-                  className="w-full pl-12 pr-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:border-cyan-400 focus:outline-none transition-all duration-300 text-lg"
-                />
-              </div>
-
-              {/* Search Results Dropdown */}
-              <AnimatePresence>
-                {showSearchResults && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 max-h-96 overflow-y-auto"
-                  >
-                    {searchResults.length === 0 ? (
-                      <div className="p-6 text-center text-white/60">
-                        No countries found matching "{searchQuery}"
-                      </div>
-                    ) : (
-                      <div className="p-2">
-                        {searchResults.map((plan, index) => (
-                          <motion.div
-                            key={plan.slug}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            onClick={() => handlePlanSelect(plan)}
-                            className="flex items-center space-x-4 p-4 rounded-xl hover:bg-white/10 cursor-pointer transition-all duration-300 group"
-                          >
-                            {plan.image && (
-                              <img
-                                src={plan.image.url}
-                                alt={plan.title}
-                                className="w-12 h-9 object-cover rounded-lg border border-white/20"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <h3 className="text-white font-semibold text-lg group-hover:text-cyan-300 transition-colors">
-                                {plan.title}
-                              </h3>
-                              <p className="text-white/60 text-sm">
-                                {plan.operators?.length || 0} operators • From $
-                                {plan.operators && plan.operators.length > 0 
-                                  ? Math.min(...plan.operators.flatMap(op => op.packages?.map(p => p.price) || [0]))
-                                  : 0
-                                }
-                              </p>
-                            </div>
-                            <ChevronDown className="w-5 h-5 text-white/40 group-hover:text-cyan-400 transform group-hover:rotate-90 transition-all" />
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <motion.button
+                onClick={handleOpenDominicanRepublic}
+                disabled={loading}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 shadow-lg shadow-amber-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                <span>Get Dominican Republic eSIM</span>
+                <motion.span
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 5, 0, -5, 0]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  🇩🇴
+                </motion.span>
+              </motion.button>
+              
+              <p className="text-white/60 text-sm text-center mt-3">
+                🏝️ Instant activation • Best prices • 5G coverage
+              </p>
             </motion.div>
 
             {/* Stats */}
@@ -706,80 +606,49 @@ const CheckoutDialog = ({ selectedPlan, onClose, onCheckout, loading, checkoutDa
     return `${days} Days`;
   };
 
-  // Función para obtener TODOS los paquetes de TODOS los operadores SIN DUPLICADOS
-  const getAllPackages = () => {
+  // Función corregida para obtener paquetes sin duplicados y solo tipo 'sim'
+  const getAllPackagesStrict = () => {
     if (!selectedPlan.operators) return [];
     
     const allPackages = [];
-    const seenPackages = new Set(); // Para evitar duplicados
+    const seenPackages = new Set();
     
     selectedPlan.operators.forEach(operator => {
       if (operator.packages && operator.packages.length > 0) {
         operator.packages.forEach(pkg => {
-          // Crear un identificador único para el paquete
-          const packageKey = `${operator.id}-${pkg.id || pkg.package_id}-${pkg.day}-${pkg.amount}-${pkg.price}`;
+          // Filtrar solo paquetes con type === 'sim'
+          if (pkg.type !== 'sim') return;
           
-          // Solo agregar si no hemos visto este paquete antes
-          if (!seenPackages.has(packageKey)) {
-            seenPackages.add(packageKey);
+          // Identificador único
+          const packageId = pkg.id || pkg.package_id;
+          let uniqueKey;
+          
+          if (packageId && !seenPackages.has(packageId)) {
+            seenPackages.add(packageId);
+            uniqueKey = packageId;
+          } else if (!packageId) {
+            // Si no hay ID, usar una combinación de propiedades
+            const fallbackKey = `${operator.title}-${pkg.day}-${pkg.amount}-${pkg.price}`;
+            if (!seenPackages.has(fallbackKey)) {
+              seenPackages.add(fallbackKey);
+              uniqueKey = fallbackKey;
+            }
+          }
+          
+          // Solo agregar si encontramos una clave única
+          if (uniqueKey) {
             allPackages.push({
               operator,
               package: pkg,
-              uniqueKey: packageKey // Guardar la clave única para usar como key en el render
+              uniqueKey: uniqueKey
             });
           }
         });
       }
     });
     
-    // Ordenar paquetes por precio (opcional)
     return allPackages.sort((a, b) => a.package.price - b.package.price);
   };
-
-// Función corregida para obtener paquetes sin duplicados
-// Función corregida para obtener paquetes sin duplicados y solo tipo 'sim'
-const getAllPackagesStrict = () => {
-  if (!selectedPlan.operators) return [];
-  
-  const allPackages = [];
-  const seenPackages = new Set();
-  
-  selectedPlan.operators.forEach(operator => {
-    if (operator.packages && operator.packages.length > 0) {
-      operator.packages.forEach(pkg => {
-        // Filtrar solo paquetes con type === 'sim'
-        if (pkg.type !== 'sim') return;
-        
-        // Identificador único
-        const packageId = pkg.id || pkg.package_id;
-        let uniqueKey;
-        
-        if (packageId && !seenPackages.has(packageId)) {
-          seenPackages.add(packageId);
-          uniqueKey = packageId;
-        } else if (!packageId) {
-          // Si no hay ID, usar una combinación de propiedades
-          const fallbackKey = `${operator.title}-${pkg.day}-${pkg.amount}-${pkg.price}`;
-          if (!seenPackages.has(fallbackKey)) {
-            seenPackages.add(fallbackKey);
-            uniqueKey = fallbackKey;
-          }
-        }
-        
-        // Solo agregar si encontramos una clave única
-        if (uniqueKey) {
-          allPackages.push({
-            operator,
-            package: pkg,
-            uniqueKey: uniqueKey
-          });
-        }
-      });
-    }
-  });
-  
-  return allPackages.sort((a, b) => a.package.price - b.package.price);
-};
 
   if (checkoutData) {
     return (
@@ -858,7 +727,7 @@ const getAllPackagesStrict = () => {
     );
   }
 
-  const packages = getAllPackagesStrict(); // Usar la versión estricta
+  const packages = getAllPackagesStrict();
 
   return (
     <motion.div
@@ -886,7 +755,7 @@ const getAllPackagesStrict = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Plan Selection - CORREGIDO SIN DUPLICADOS */}
+          {/* Plan Selection */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
               <h3 className="text-lg font-semibold text-white mb-4">Selected Plan</h3>
@@ -907,7 +776,7 @@ const getAllPackagesStrict = () => {
                 </div>
               </div>
 
-              {/* Package Selection - SIN DUPLICADOS */}
+              {/* Package Selection */}
               {selectedPlan.operators && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
@@ -918,49 +787,49 @@ const getAllPackagesStrict = () => {
                   </div>
                   
                   {/* Mostrar todos los paquetes sin duplicados */}
-{packages.map((item) => (
-  <motion.div
-    key={item.uniqueKey}
-    whileHover={{ scale: 1.02 }}
-    className={`p-3 rounded-xl border cursor-pointer transition-all ${
-      selectedPackage?.uniqueKey === item.uniqueKey 
-        ? 'border-cyan-400 bg-cyan-400/10' 
-        : 'border-white/10 hover:border-white/20'
-    }`}
-    onClick={() => setSelectedPackage(item)}
-  >
-    <div className="flex justify-between items-start mb-2">
-      <div className="flex-1">
-        <p className="text-white font-semibold">
-          {formatData(item.package.amount)}
-        </p>
-        <p className="text-white/60 text-sm">
-          {formatDuration(item.package.day)}
-        </p>
-        <p className="text-white/50 text-xs mt-1">
-          {item.operator.title}
-        </p>
-      </div>
-      <p className="text-cyan-400 font-bold text-lg">${item.package.price}</p>
-    </div>
-    
-    {/* Información adicional del paquete */}
-    <div className="flex items-center space-x-4 text-xs text-white/60">
-      {item.package.day && (
-        <div className="flex items-center space-x-1">
-          <Calendar className="w-3 h-3" />
-          <span>{item.package.day} days</span>
-        </div>
-      )}
-      {item.package.amount && (
-        <div className="flex items-center space-x-1">
-          <Signal className="w-3 h-3" />
-          <span>{formatData(item.package.amount)}</span>
-        </div>
-      )}
-    </div>
-  </motion.div>
-))}
+                  {packages.map((item) => (
+                    <motion.div
+                      key={item.uniqueKey}
+                      whileHover={{ scale: 1.02 }}
+                      className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                        selectedPackage?.uniqueKey === item.uniqueKey 
+                          ? 'border-cyan-400 bg-cyan-400/10' 
+                          : 'border-white/10 hover:border-white/20'
+                      }`}
+                      onClick={() => setSelectedPackage(item)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <p className="text-white font-semibold">
+                            {formatData(item.package.amount)}
+                          </p>
+                          <p className="text-white/60 text-sm">
+                            {formatDuration(item.package.day)}
+                          </p>
+                          <p className="text-white/50 text-xs mt-1">
+                            {item.operator.title}
+                          </p>
+                        </div>
+                        <p className="text-cyan-400 font-bold text-lg">${item.package.price}</p>
+                      </div>
+                      
+                      {/* Información adicional del paquete */}
+                      <div className="flex items-center space-x-4 text-xs text-white/60">
+                        {item.package.day && (
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{item.package.day} days</span>
+                          </div>
+                        )}
+                        {item.package.amount && (
+                          <div className="flex items-center space-x-1">
+                            <Signal className="w-3 h-3" />
+                            <span>{formatData(item.package.amount)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
 
                   {/* Mensaje si no hay paquetes */}
                   {packages.length === 0 && (
@@ -998,7 +867,7 @@ const getAllPackagesStrict = () => {
             </div>
           </div>
 
-          {/* Payment Form (se mantiene igual) */}
+          {/* Payment Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
