@@ -7,6 +7,7 @@ import {
   Mail, Phone, Map, Loader, ArrowLeft, Shield, 
   Plane, Signal, Zap, Clock, ShoppingCart
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const HeroWithSearch = () => {
   const [plans, setPlans] = useState([]);
@@ -15,6 +16,7 @@ const HeroWithSearch = () => {
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const router = useRouter();
 
   // Fetch plans from API
   useEffect(() => {
@@ -39,16 +41,17 @@ const HeroWithSearch = () => {
 
   // Función para abrir directamente Dominican Republic
   const handleOpenDominicanRepublic = () => {
-    const dominicanRepublic = plans.find(plan => plan.slug === 'dominican-republic');
-    if (dominicanRepublic) {
-      setSelectedPlan({
-        country: dominicanRepublic.title,
-        countrySlug: dominicanRepublic.slug,
-        image: dominicanRepublic.image?.url,
-        operators: dominicanRepublic.operators
-      });
-      setShowCheckoutDialog(true);
-    }
+    // const dominicanRepublic = plans.find(plan => plan.slug === 'dominican-republic');
+    // if (dominicanRepublic) {
+    //   setSelectedPlan({
+    //     country: dominicanRepublic.title,
+    //     countrySlug: dominicanRepublic.slug,
+    //     image: dominicanRepublic.image?.url,
+    //     operators: dominicanRepublic.operators
+    //   });
+    //   setShowCheckoutDialog(true);
+    // }
+    router.push('/plans');
   };
 
   // Handle checkout

@@ -45,7 +45,29 @@ const AllPlansPage = () => {
             }))
             .filter(country => country.operators.length > 0);
           
-          setPlans(dominicanRepublicPlans);
+          // Duplicar el último paquete de cada operador como unlimited
+          const plansWithUnlimited = dominicanRepublicPlans.map(country => ({
+            ...country,
+            operators: country.operators.map(operator => {
+              if (operator.packages && operator.packages.length > 0) {
+                const lastPackage = operator.packages[operator.packages.length - 1];
+                const unlimitedPackage = {
+                  ...lastPackage,
+                  id: lastPackage.id + '-unlimited', // ID único para el paquete unlimited
+                  amount: null, // Unlimited data
+                  is_unlimited: true,
+                  price: lastPackage.price + 8 // Aumentar precio en 8 USD
+                };
+                return {
+                  ...operator,
+                  packages: [...operator.packages, unlimitedPackage]
+                };
+              }
+              return operator;
+            })
+          }));
+          
+          setPlans(plansWithUnlimited);
         }
       } catch (err) {
         setError('Failed to load plans');
@@ -189,7 +211,6 @@ const AllPlansPage = () => {
 };
 
 // Modern Header Component
-// Modern Header Component
 const ModernHeader = ({ onHome }) => {
   return (
     <motion.header
@@ -249,8 +270,8 @@ const PlanSelectionView = ({
   onHome
 }) => {
   // Format data display
-  const formatData = (bytes) => {
-    if (!bytes) return 'Unlimited';
+  const formatData = (bytes, isUnlimited = false) => {
+    if (isUnlimited || !bytes) return 'Unlimited';
     const gb = bytes / 1024;
     return gb >= 1 ? `${Math.round(gb * 10) / 10} GB` : `${bytes} MB`;
   };
@@ -684,14 +705,23 @@ const PlanCard = ({ plan, index, formatData, formatDuration, onPlanSelect }) => 
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: (opIndex + pkgIndex) * 0.05 }}
                         whileHover={{ scale: 1.02 }}
-                        className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-amber-500/10 transition-all duration-300 cursor-pointer group border border-white/5"
+                        className={`flex items-center justify-between p-3 rounded-lg hover:bg-amber-500/10 transition-all duration-300 cursor-pointer group border ${
+                          pkg.is_unlimited 
+                            ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-400/50' 
+                            : 'bg-white/5 border-white/5'
+                        }`}
                         onClick={() => onPlanSelect(plan, operator, pkg)}
                       >
                         <div className="flex-1">
                           <div className="flex items-center space-x-3">
                             <div className="text-left">
-                              <p className="text-white font-medium">
-                                {formatData(pkg.amount)}
+                              <p className="text-white font-medium flex items-center space-x-2">
+                                <span>{formatData(pkg.amount, pkg.is_unlimited)}</span>
+                                {pkg.is_unlimited && (
+                                  <span className="px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs rounded-full">
+                                    UNLIMITED
+                                  </span>
+                                )}
                               </p>
                               <p className="text-white/60 text-sm">
                                 {formatDuration(pkg.day)}
@@ -739,7 +769,7 @@ const PlanCard = ({ plan, index, formatData, formatDuration, onPlanSelect }) => 
   );
 };
 
-// Order Form Component (actualizado con header moderno)
+// Order Form Component
 const OrderForm = ({ selectedPlan, onBack, onHome, onSubmit }) => {
   const [formData, setFormData] = useState({
     package_id: selectedPlan.package.id || '',
@@ -841,8 +871,9 @@ const OrderForm = ({ selectedPlan, onBack, onHome, onSubmit }) => {
                   <div className="flex justify-between text-white">
                     <span>Data:</span>
                     <span className="font-semibold">
-                      {selectedPlan.package.amount ? 
-                        `${selectedPlan.package.amount / 1024} GB` : 'Unlimited'
+                      {selectedPlan.package.is_unlimited 
+                        ? 'Unlimited' 
+                        : `${selectedPlan.package.amount / 1024} GB`
                       }
                     </span>
                   </div>
@@ -1146,7 +1177,7 @@ const OrderForm = ({ selectedPlan, onBack, onHome, onSubmit }) => {
   );
 };
 
-// Checkout Success Page (actualizado con header moderno)
+// Checkout Success Page
 const CheckoutPage = ({ selectedPlan, checkoutData, onBack, onHome }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -1200,8 +1231,9 @@ const CheckoutPage = ({ selectedPlan, checkoutData, onBack, onHome }) => {
                 <div>
                   <p className="text-white/60 text-sm">Data</p>
                   <p className="text-white font-semibold">
-                    {selectedPlan.package.amount ? 
-                      `${selectedPlan.package.amount / 1024} GB` : 'Unlimited'
+                    {selectedPlan.package.is_unlimited 
+                      ? 'Unlimited' 
+                      : `${selectedPlan.package.amount / 1024} GB`
                     }
                   </p>
                 </div>
